@@ -31,17 +31,6 @@ public class HeaderFragment extends Fragment {
 
     TextView mUserName;
     ProfileTracker mProfileTracker;
-//    private final CompositeDisposable disposables = new CompositeDisposable();
-//
-//
-//    Single<String> userNameSingle = Single.fromCallable(new Callable<String>() {
-//        @Override
-//        public String call() throws Exception {
-//
-//            return Profile.getCurrentProfile().getName();
-//        }
-//    });
-
 
 
     public HeaderFragment() {
@@ -52,7 +41,6 @@ public class HeaderFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View fragmentView =  inflater.inflate(R.layout.fragment_header, container, false);
 
         mUserName = (TextView) fragmentView.findViewById(R.id.header_username);
@@ -65,33 +53,13 @@ public class HeaderFragment extends Fragment {
             }
         };
         setHeaderUserName();
-//        userNameSingle
-//                .subscribeOn(Schedulers.io())
-//                .observeOn(AndroidSchedulers.mainThread())
-//                .subscribe(new SingleObserver<String>() {
-//            @Override
-//            public void onSubscribe(Disposable d) {
-//                disposables.add(d);
-//            }
-//
-//            @Override
-//            public void onSuccess(String value) {
-//                assert mUserName != null;
-//                mUserName.setText(Profile.getCurrentProfile().getName());
-//            }
-//
-//            @Override
-//            public void onError(Throwable e) {
-//
-//            }
-//        });
+
         return fragmentView;
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-//        disposables.clear();
         if (mProfileTracker != null) {
             mProfileTracker.stopTracking();
         }
