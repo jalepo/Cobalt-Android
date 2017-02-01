@@ -12,12 +12,22 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.facebook.AccessToken;
+import com.facebook.Profile;
+import com.facebook.ProfileTracker;
+
+import java.util.ArrayList;
 
 public class ListActivity extends AppCompatActivity {
 
     private RecyclerView mRecyclerView;
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
+
+    FeedFetchHelper feedFetchHelper = new FeedFetchHelper(this);
+
+    ArrayList<Feed.FeedItem> feedList = new ArrayList<>();
+
+    ProfileTracker mProfileTracker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,9 +44,15 @@ public class ListActivity extends AppCompatActivity {
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
 
-        String[] dataSet = { "Chandra", "Mary", "Adam", "No One"};
-        mAdapter = new ListAdapter(dataSet);
+        mAdapter = new ListAdapter(feedList);
         mRecyclerView.setAdapter(mAdapter);
+
+        mProfileTracker = new ProfileTracker() {
+            @Override
+            protected void onCurrentProfileChanged(Profile oldProfile, Profile currentProfile) {
+                loadFeed();
+            }
+        };
     }
 
     @Override
@@ -48,7 +64,30 @@ public class ListActivity extends AppCompatActivity {
             loginIntent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
             startActivity(loginIntent);
             finish();
+        } else {
+            loadFeed();
         }
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if(mProfileTracker != null) {
+            mProfileTracker.stopTracking();
+        }
+    }
+
+    public void loadFeed() {
+        if(Profile.getCurrentProfile() != null) {
+            feedFetchHelper.getPageFeed(Profile.getCurrentProfile().getId(),
+                    AccessToken.getCurrentAccessToken().getToken());
+        }
+    }
+
+    public void updateFeedList(Feed.FeedItem newFeedItem) {
+        feedList.add(newFeedItem);
+        mAdapter.notifyDataSetChanged();
     }
 
     public void menuButtonClicked(View view) {
@@ -57,7 +96,7 @@ public class ListActivity extends AppCompatActivity {
     }
 
     public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
-        private String[] mDataset;
+        private ArrayList<Feed.FeedItem> mDataset;
 
         // Provide a reference to the views for each data item
         // Complex data items may need more than one view per item, and
@@ -72,7 +111,7 @@ public class ListActivity extends AppCompatActivity {
         }
 
         // Provide a suitable constructor (depends on the kind of dataset)
-        public ListAdapter(String[] myDataset) {
+        public ListAdapter(ArrayList<Feed.FeedItem> myDataset) {
             mDataset = myDataset;
         }
 
@@ -93,15 +132,17 @@ public class ListActivity extends AppCompatActivity {
         public void onBindViewHolder(ViewHolder holder, int position) {
             // - get element from your dataset at this position
             // - replace the contents of the view with that element
-            holder.mPostOwner.setText(mDataset[position]);
+            holder.mPostOwner.setText(mDataset.get(position).message);
 
         }
 
         // Return the size of your dataset (invoked by the layout manager)
         @Override
         public int getItemCount() {
-            return mDataset.length;
+            return mDataset.size();
         }
+
+
     }
 
 

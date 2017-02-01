@@ -11,6 +11,7 @@ import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
 import com.facebook.appevents.AppEventsLogger;
+import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 
@@ -38,6 +39,9 @@ public class FBLoginActivity extends AppCompatActivity {
 
         if(AccessToken.getCurrentAccessToken() == null) {
             loginButton.setVisibility(View.VISIBLE);
+            loginButton.setReadPermissions("email", "user_posts", "user_photos");
+
+
             mCallbackManager = CallbackManager.Factory.create();
             loginButton.registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {
                 @Override
