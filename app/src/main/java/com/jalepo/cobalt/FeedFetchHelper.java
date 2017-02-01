@@ -18,6 +18,7 @@ import java.util.concurrent.Callable;
 import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
 import io.reactivex.Observer;
+import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Function;
@@ -37,10 +38,12 @@ public class FeedFetchHelper {
     ListActivity ownerActivity;
     String pageId;
     String accessToken;
+
     FeedFetchHelper(ListActivity activity) {
         ownerActivity = activity;
     }
 
+    String photoFields = "id,from,images,link,name,created_time,updated_time";
 
 
 
@@ -51,15 +54,15 @@ public class FeedFetchHelper {
             .build();
 
     PageFeedService pageFeedService = retrofit.create(PageFeedService.class);
+    PhotoDataService photoDataService = retrofit.create((PhotoDataService.class));
 
-
-//    Observable<Feed.FeedItem> fbFeedItemObservable = Observable.fromArray(new ArrayList<Feed.FeedItem>());
 
     public void getPageFeed(String page_id, String access_token) {
         pageId = page_id;
         accessToken = access_token;
+        String feedFields = "id,from,link,object_id,message,type,name,created_time,updated_time";
 
-        pageFeedService.getPageFeed(pageId, accessToken)
+        pageFeedService.getPageFeed(pageId, feedFields, accessToken)
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
                 .flatMap(new Function<Feed, Observable<Feed.FeedItem>>() {
@@ -94,13 +97,23 @@ public class FeedFetchHelper {
 
                     }
                 });
+
+
     }
 
 
     public interface PageFeedService {
         @GET("{page_id}/feed")
         Observable<Feed> getPageFeed(@Path("page_id") String pageId,
-                               @Query("access_token") String accessToken);
+                                     @Query("fields") String fields,
+                                     @Query("access_token") String accessToken);
+    }
+
+    public interface PhotoDataService {
+        @GET("{photo_id}")
+        Single<Photos.Photo> getPhotos(@Path("photo_id") String photoId,
+                                       @Query("fields") String fields,
+                                       @Query("access_token") String accessToken);
     }
 
 

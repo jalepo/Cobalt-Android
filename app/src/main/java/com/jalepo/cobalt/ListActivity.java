@@ -9,13 +9,22 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.facebook.AccessToken;
 import com.facebook.Profile;
 import com.facebook.ProfileTracker;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
+
+import io.reactivex.Single;
+import io.reactivex.SingleObserver;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
 public class ListActivity extends AppCompatActivity {
 
@@ -26,8 +35,10 @@ public class ListActivity extends AppCompatActivity {
     FeedFetchHelper feedFetchHelper = new FeedFetchHelper(this);
 
     ArrayList<Feed.FeedItem> feedList = new ArrayList<>();
+    ArrayList<Photos.Photo> photoList = new ArrayList<>();
 
     ProfileTracker mProfileTracker;
+    String accessToken;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +76,7 @@ public class ListActivity extends AppCompatActivity {
             startActivity(loginIntent);
             finish();
         } else {
+            accessToken = AccessToken.getCurrentAccessToken().getToken();
             loadFeed();
         }
 
@@ -81,7 +93,7 @@ public class ListActivity extends AppCompatActivity {
     public void loadFeed() {
         if(Profile.getCurrentProfile() != null) {
             feedFetchHelper.getPageFeed(Profile.getCurrentProfile().getId(),
-                    AccessToken.getCurrentAccessToken().getToken());
+                    accessToken);
         }
     }
 
@@ -89,6 +101,13 @@ public class ListActivity extends AppCompatActivity {
         feedList.add(newFeedItem);
         mAdapter.notifyDataSetChanged();
     }
+
+    public void updatePhotoList(Photos.Photo newPhoto) {
+        photoList.add(newPhoto);
+        mAdapter.notifyDataSetChanged();
+    }
+
+
 
     public void menuButtonClicked(View view) {
         Intent menuIntent = new Intent(getApplicationContext(), MenuActivity.class);
@@ -104,9 +123,15 @@ public class ListActivity extends AppCompatActivity {
          class ViewHolder extends RecyclerView.ViewHolder {
             // each data item is just a string in this case
             TextView mPostOwner;
+            TextView mPostMessage;
+            TextView mPostLink;
+            ImageView mPostImage;
+            CompositeDisposable disposable = new CompositeDisposable();
             ViewHolder(CardView v) {
                 super(v);
                 mPostOwner = (TextView) v.findViewById(R.id.post_owner_text);
+                mPostMessage = (TextView) v.findViewById(R.id.post_message_text);
+                mPostImage = (ImageView) v.findViewById(R.id.post_imageview);
             }
         }
 
@@ -129,11 +154,50 @@ public class ListActivity extends AppCompatActivity {
 
         // Replace the contents of a view (invoked by the layout manager)
         @Override
-        public void onBindViewHolder(ViewHolder holder, int position) {
+        public void onBindViewHolder(final ViewHolder holder, int position) {
             // - get element from your dataset at this position
             // - replace the contents of the view with that element
-            holder.mPostOwner.setText(mDataset.get(position).message);
+            Feed.FeedItem item = mDataset.get(position);
 
+            holder.mPostOwner.setText(item.from.getName());
+            holder.mPostMessage.setText(item.message);
+
+            if(item.type.equals("photo")) {
+                final String photoId = item.object_id;
+                feedFetchHelper.photoDataService.getPhotos(photoId,
+                        feedFetchHelper.photoFields, accessToken)
+                        .subscribeOn(Schedulers.newThread())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(new SingleObserver<Photos.Photo>() {
+                            @Override
+                            public void onSubscribe(Disposable d) {
+                                holder.disposable.add(d);
+                            }
+
+                            @Override
+                            public void onSuccess(Photos.Photo value) {
+                                if(value.images != null) {
+                                    String url = value.images.get(0).source;
+                                    Picasso.with(getApplicationContext())
+                                            .load(url)
+                                            .into(holder.mPostImage);
+                                }
+                            }
+
+                            @Override
+                            public void onError(Throwable e) {
+
+                            }
+                        });
+
+            }
+        }
+
+        @Override
+        public void onViewRecycled(ViewHolder holder) {
+            super.onViewRecycled(holder);
+            holder.mPostImage.setImageDrawable(null);
+            holder.disposable.clear();
         }
 
         // Return the size of your dataset (invoked by the layout manager)
