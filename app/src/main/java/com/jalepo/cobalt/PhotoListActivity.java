@@ -31,17 +31,11 @@ import io.reactivex.functions.Function;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 
-public class PhotoListActivity extends AppCompatActivity {
+public class PhotoListActivity extends CobaltActivity {
     private RecyclerView.Adapter mAdapter;
-    private RecyclerView mRecyclerView;
-    FeedFetchHelper feedFetchHelper = new FeedFetchHelper();
 
     ArrayList<Feed.FeedItem> photoList = new ArrayList<>();
-    CompositeDisposable disposable = new CompositeDisposable();
-    ProfileTracker mProfileTracker;
-    String accessToken;
-    String nextPageLink;
-    boolean loadingNextPage = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,59 +56,16 @@ public class PhotoListActivity extends AppCompatActivity {
 
         mAdapter = new PhotoListActivity.PhotoListAdapter(photoList);
         mRecyclerView.setAdapter(mAdapter);
-        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-                if(!loadingNextPage && !recyclerView.canScrollVertically(1)) {
-                    loadNextPage();
-                    loadingNextPage = true;
-                }
-            }
-        });
-        mProfileTracker = new ProfileTracker() {
-            @Override
-            protected void onCurrentProfileChanged(Profile oldProfile, Profile currentProfile) {
-                loadPhotos();
 
-            }
-        };
+
     }
+
+
+
+
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        // If the access token is null, then switch to the login activity and kill this one
-        if (AccessToken.getCurrentAccessToken() == null) {
-            Intent loginIntent = new Intent(getApplicationContext(), FBLoginActivity.class);
-            loginIntent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-            startActivity(loginIntent);
-            finish();
-        } else {
-            accessToken = AccessToken.getCurrentAccessToken().getToken();
-            loadPhotos();
-        }
-
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if(mProfileTracker != null) {
-            mProfileTracker.stopTracking();
-        }
-
-        mRecyclerView.removeOnScrollListener(null);
-        disposable.clear();
-    }
-
-    public void menuButtonClicked(View view) {
-        Intent menuIntent = new Intent(getApplicationContext(), MenuActivity.class);
-        startActivity(menuIntent);
-    }
-
-
-    public void loadPhotos() {
+    public void loadFirstPage() {
         if(Profile.getCurrentProfile() != null) {
             String pageId = Profile.getCurrentProfile().getId();
             String feedFields = "id,from,link,object_id,message,type,name,story,created_time,updated_time";
@@ -123,6 +74,9 @@ public class PhotoListActivity extends AppCompatActivity {
         }
     }
 
+
+
+    @Override
     public void loadNextPage( ) {
         if(nextPageLink != null) {
 
@@ -159,8 +113,6 @@ public class PhotoListActivity extends AppCompatActivity {
                     @Override
                     public void onNext(Feed.FeedItem value) {
                         Log.v("COBALT", "Page Feed onNext");
-                        Log.v("COBALT", "Feed: " + value);
-
                         updatePhotoList(value);
                     }
 

@@ -30,23 +30,21 @@ import io.reactivex.functions.Function;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 
-public class FeedListActivity extends AppCompatActivity {
+public class FeedListActivity extends CobaltActivity {
 
     private RecyclerView.Adapter mAdapter;
 
-    FeedFetchHelper feedFetchHelper = new FeedFetchHelper();
 
     ArrayList<Feed.FeedItem> feedList = new ArrayList<>();
 
-    ProfileTracker mProfileTracker;
-    String accessToken;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_feedlist);
 
-        RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.feed_list_view);
+        mRecyclerView = (RecyclerView) findViewById(R.id.feed_list_view);
 
         // use this setting to improve performance if you know that changes
         // in content do not change the layout size of the RecyclerView
@@ -59,87 +57,74 @@ public class FeedListActivity extends AppCompatActivity {
         mAdapter = new FeedListAdapter(feedList);
         mRecyclerView.setAdapter(mAdapter);
 
-        mProfileTracker = new ProfileTracker() {
-            @Override
-            protected void onCurrentProfileChanged(Profile oldProfile, Profile currentProfile) {
-                loadFeed();
-            }
-        };
+
     }
+
+
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        // If the access token is null, then switch to the login activity and kill this one
-        if (AccessToken.getCurrentAccessToken() == null) {
-            Intent loginIntent = new Intent(getApplicationContext(), FBLoginActivity.class);
-            loginIntent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-            startActivity(loginIntent);
-            finish();
-        } else {
-            accessToken = AccessToken.getCurrentAccessToken().getToken();
-            loadFeed();
-        }
-
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if(mProfileTracker != null) {
-            mProfileTracker.stopTracking();
-        }
-    }
-
-
-    public void loadFeed() {
+    public void loadFirstPage() {
         if(Profile.getCurrentProfile() != null) {
             String pageId = Profile.getCurrentProfile().getId();
             String feedFields = "id,from,link,object_id,message,type,name,story,created_time,updated_time";
-            feedFetchHelper.pageFeedService.getPageFeed(pageId, feedFields, accessToken)
-                    .subscribeOn(Schedulers.newThread())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .flatMap(new Function<Feed, Observable<Feed.FeedItem>>() {
-                        @Override
-                        public Observable<Feed.FeedItem> apply(Feed feed) throws Exception {
-                            return Observable.fromIterable(feed.data);
-                        }
-                    })
-                    .filter(new Predicate<Feed.FeedItem>() {
-                        @Override
-                        public boolean test(Feed.FeedItem feedItem) throws Exception {
-                            return feedItem.type.equals("status") ||
-                                    feedItem.type.equals("photo") ||
-                                    feedItem.type.equals("video");
-                        }
-                    })
-                    .subscribe(new Observer<Feed.FeedItem>() {
-                        @Override
-                        public void onSubscribe(Disposable d) {
-                            Log.v("COBALT", "Page Feed onSubscribe");
-                        }
+            subscribeToFeed(feedFetchHelper.pageFeedService.getPageFeed(pageId, feedFields, accessToken));
 
-                        @Override
-                        public void onNext(Feed.FeedItem value) {
-                            Log.v("COBALT", "Page Feed onNext");
-                            Log.v("COBALT", "Feed: " + value);
-
-                            updateFeedList(value);
-                        }
-
-                        @Override
-                        public void onError(Throwable e) {
-                            Log.v("COBALT", "Page Feed onError: " + e.getLocalizedMessage());
-
-                        }
-
-                        @Override
-                        public void onComplete() {
-                            Log.v("COBALT", "Page Feed onComplete");
-
-                        }
-                    });
         }
+    }
+
+    @Override
+    public void loadNextPage() {
+        if(nextPageLink != null) {
+
+            subscribeToFeed(feedFetchHelper.paginationService.getPage(nextPageLink.trim()));
+
+        }
+    }
+
+    public void subscribeToFeed(Observable<Feed> feedObservable) {
+        feedObservable.subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .flatMap(new Function<Feed, Observable<Feed.FeedItem>>() {
+                    @Override
+                    public Observable<Feed.FeedItem> apply(Feed feed) throws Exception {
+                        nextPageLink = feed.paging.next;
+                        loadingNextPage = false;
+                        return Observable.fromIterable(feed.data);
+                    }
+                })
+                .filter(new Predicate<Feed.FeedItem>() {
+                    @Override
+                    public boolean test(Feed.FeedItem feedItem) throws Exception {
+                        return feedItem.type.equals("status") ||
+                                feedItem.type.equals("photo") ||
+                                feedItem.type.equals("video");
+                    }
+                })
+                .subscribe(new Observer<Feed.FeedItem>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        Log.v("COBALT", "Page Feed onSubscribe");
+                        disposable.add(d);
+                    }
+
+                    @Override
+                    public void onNext(Feed.FeedItem value) {
+                        Log.v("COBALT", "Page Feed onNext");
+                        updateFeedList(value);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.v("COBALT", "Page Feed onError: " + e.getLocalizedMessage());
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        Log.v("COBALT", "Page Feed onComplete");
+
+                    }
+                });
     }
 
     public void updateFeedList(Feed.FeedItem newFeedItem) {
@@ -149,10 +134,7 @@ public class FeedListActivity extends AppCompatActivity {
 
 
 
-    public void menuButtonClicked(View view) {
-        Intent menuIntent = new Intent(getApplicationContext(), MenuActivity.class);
-        startActivity(menuIntent);
-    }
+
 
     public class FeedListAdapter extends RecyclerView.Adapter<FeedListAdapter.ViewHolder> {
         private ArrayList<Feed.FeedItem> mDataset;
