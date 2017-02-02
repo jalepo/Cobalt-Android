@@ -18,7 +18,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.GET;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
-
+import retrofit2.http.Url;
 
 
 public class FeedFetchHelper {
@@ -30,19 +30,20 @@ public class FeedFetchHelper {
 //    FeedFetchHelper(FeedListActivity activity) {
 //        ownerActivity = activity;
 //    }
-
+    String baseUrl = "https://graph.facebook.com/v2.8/";
     String photoFields = "id,from,images,link,name,created_time,updated_time";
 
 
 
     Retrofit retrofit = new Retrofit.Builder()
-            .baseUrl("https://graph.facebook.com/v2.8/")
+            .baseUrl(baseUrl)
             .addConverterFactory(GsonConverterFactory.create())
             .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
             .build();
 
     PageFeedService pageFeedService = retrofit.create(PageFeedService.class);
-    PhotoDataService photoDataService = retrofit.create((PhotoDataService.class));
+    PhotoDataService photoDataService = retrofit.create(PhotoDataService.class);
+    PaginationService paginationService = retrofit.create(PaginationService.class);
 
 
 //    public void getPageFeed(String page_id, String access_token) {
@@ -112,5 +113,8 @@ public class FeedFetchHelper {
                                        @Query("access_token") String accessToken);
     }
 
-
+    public interface PaginationService {
+        @GET
+        Observable<Feed> getPage(@Url String url);
+    }
 }

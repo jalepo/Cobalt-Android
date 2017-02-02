@@ -33,19 +33,22 @@ import io.reactivex.schedulers.Schedulers;
 
 public class PhotoListActivity extends AppCompatActivity {
     private RecyclerView.Adapter mAdapter;
+    private RecyclerView mRecyclerView;
     FeedFetchHelper feedFetchHelper = new FeedFetchHelper();
 
     ArrayList<Feed.FeedItem> photoList = new ArrayList<>();
-
+    CompositeDisposable disposable = new CompositeDisposable();
     ProfileTracker mProfileTracker;
     String accessToken;
+    String nextPageLink;
+    boolean loadingNextPage = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_photo_list);
 
-        RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.photo_list_view);
+        mRecyclerView = (RecyclerView) findViewById(R.id.photo_list_view);
 
         // use this setting to improve performance if you know that changes
         // in content do not change the layout size of the RecyclerView
@@ -54,11 +57,21 @@ public class PhotoListActivity extends AppCompatActivity {
         // use a linear layout manager
         RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(this, 3,
                 GridLayoutManager.VERTICAL, false);
+
         mRecyclerView.setLayoutManager(mLayoutManager);
 
         mAdapter = new PhotoListActivity.PhotoListAdapter(photoList);
         mRecyclerView.setAdapter(mAdapter);
-
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                if(!loadingNextPage && !recyclerView.canScrollVertically(1)) {
+                    loadNextPage();
+                    loadingNextPage = true;
+                }
+            }
+        });
         mProfileTracker = new ProfileTracker() {
             @Override
             protected void onCurrentProfileChanged(Profile oldProfile, Profile currentProfile) {
@@ -90,6 +103,9 @@ public class PhotoListActivity extends AppCompatActivity {
         if(mProfileTracker != null) {
             mProfileTracker.stopTracking();
         }
+
+        mRecyclerView.removeOnScrollListener(null);
+        disposable.clear();
     }
 
     public void menuButtonClicked(View view) {
@@ -102,48 +118,65 @@ public class PhotoListActivity extends AppCompatActivity {
         if(Profile.getCurrentProfile() != null) {
             String pageId = Profile.getCurrentProfile().getId();
             String feedFields = "id,from,link,object_id,message,type,name,story,created_time,updated_time";
-            feedFetchHelper.pageFeedService.getPageFeed(pageId, feedFields, accessToken)
-                    .subscribeOn(Schedulers.newThread())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .flatMap(new Function<Feed, Observable<Feed.FeedItem>>() {
-                        @Override
-                        public Observable<Feed.FeedItem> apply(Feed feed) throws Exception {
-                            return Observable.fromIterable(feed.data);
-                        }
-                    })
-                    .filter(new Predicate<Feed.FeedItem>() {
-                        @Override
-                        public boolean test(Feed.FeedItem feedItem) throws Exception {
-                            return feedItem.type.equals("photo") ;
-                        }
-                    })
-                    .subscribe(new Observer<Feed.FeedItem>() {
-                        @Override
-                        public void onSubscribe(Disposable d) {
-                            Log.v("COBALT", "Page Feed onSubscribe");
-                        }
+            subscribeToFeed(feedFetchHelper.pageFeedService.getPageFeed(pageId, feedFields, accessToken));
 
-                        @Override
-                        public void onNext(Feed.FeedItem value) {
-                            Log.v("COBALT", "Page Feed onNext");
-                            Log.v("COBALT", "Feed: " + value);
-
-                            updatePhotoList(value);
-                        }
-
-                        @Override
-                        public void onError(Throwable e) {
-                            Log.v("COBALT", "Page Feed onError: " + e.getLocalizedMessage());
-
-                        }
-
-                        @Override
-                        public void onComplete() {
-                            Log.v("COBALT", "Page Feed onComplete");
-
-                        }
-                    });
         }
+    }
+
+    public void loadNextPage( ) {
+        if(nextPageLink != null) {
+
+            subscribeToFeed(feedFetchHelper.paginationService.getPage(nextPageLink.trim()));
+
+        }
+
+    }
+
+    public void subscribeToFeed(Observable<Feed> observable) {
+        observable.subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .flatMap(new Function<Feed, Observable<Feed.FeedItem>>() {
+                    @Override
+                    public Observable<Feed.FeedItem> apply(Feed feed) throws Exception {
+                        nextPageLink = feed.paging.next;
+                        loadingNextPage = false;
+                        return Observable.fromIterable(feed.data);
+                    }
+                })
+                .filter(new Predicate<Feed.FeedItem>() {
+                    @Override
+                    public boolean test(Feed.FeedItem feedItem) throws Exception {
+                        return feedItem.type.equals("photo") ;
+                    }
+                })
+                .subscribe(new Observer<Feed.FeedItem>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        Log.v("COBALT", "Page Feed onSubscribe");
+                        disposable.add(d);
+                    }
+
+                    @Override
+                    public void onNext(Feed.FeedItem value) {
+                        Log.v("COBALT", "Page Feed onNext");
+                        Log.v("COBALT", "Feed: " + value);
+
+                        updatePhotoList(value);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.v("COBALT", "Page Feed onError: " + e.getLocalizedMessage());
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        Log.v("COBALT", "Page Feed onComplete");
+
+                    }
+                });
+
     }
 
     public void updatePhotoList(Feed.FeedItem newFeedItem) {

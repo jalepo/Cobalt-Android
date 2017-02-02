@@ -12,7 +12,7 @@ import java.util.Date;
 public class Feed {
     public Feed(){}
     public ArrayList<FeedItem> data = new ArrayList<>();
-
+    public Paging paging;
 
     public class FeedItem {
         public FeedItem(){}
@@ -27,6 +27,10 @@ public class Feed {
         public Date updated_time;
     }
 
-
+    public class Paging {
+        public Paging(){}
+        public String previous;
+        public String next;
+    }
 
 }
