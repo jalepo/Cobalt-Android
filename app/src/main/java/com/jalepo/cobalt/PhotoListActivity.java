@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.CardView;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -30,13 +31,11 @@ import io.reactivex.functions.Function;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 
-public class FeedListActivity extends AppCompatActivity {
-
+public class PhotoListActivity extends AppCompatActivity {
     private RecyclerView.Adapter mAdapter;
-
     FeedFetchHelper feedFetchHelper = new FeedFetchHelper();
 
-    ArrayList<Feed.FeedItem> feedList = new ArrayList<>();
+    ArrayList<Feed.FeedItem> photoList = new ArrayList<>();
 
     ProfileTracker mProfileTracker;
     String accessToken;
@@ -44,25 +43,27 @@ public class FeedListActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_feedlist);
+        setContentView(R.layout.activity_photo_list);
 
-        RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.feed_list_view);
+        RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.photo_list_view);
 
         // use this setting to improve performance if you know that changes
         // in content do not change the layout size of the RecyclerView
         mRecyclerView.setHasFixedSize(true);
 
         // use a linear layout manager
-        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(this);
+        RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(this, 3,
+                GridLayoutManager.VERTICAL, false);
         mRecyclerView.setLayoutManager(mLayoutManager);
 
-        mAdapter = new FeedListAdapter(feedList);
+        mAdapter = new PhotoListActivity.PhotoListAdapter(photoList);
         mRecyclerView.setAdapter(mAdapter);
 
         mProfileTracker = new ProfileTracker() {
             @Override
             protected void onCurrentProfileChanged(Profile oldProfile, Profile currentProfile) {
-                loadFeed();
+                loadPhotos();
+
             }
         };
     }
@@ -78,7 +79,7 @@ public class FeedListActivity extends AppCompatActivity {
             finish();
         } else {
             accessToken = AccessToken.getCurrentAccessToken().getToken();
-            loadFeed();
+            loadPhotos();
         }
 
     }
@@ -91,8 +92,13 @@ public class FeedListActivity extends AppCompatActivity {
         }
     }
 
+    public void menuButtonClicked(View view) {
+        Intent menuIntent = new Intent(getApplicationContext(), MenuActivity.class);
+        startActivity(menuIntent);
+    }
 
-    public void loadFeed() {
+
+    public void loadPhotos() {
         if(Profile.getCurrentProfile() != null) {
             String pageId = Profile.getCurrentProfile().getId();
             String feedFields = "id,from,link,object_id,message,type,name,story,created_time,updated_time";
@@ -108,9 +114,7 @@ public class FeedListActivity extends AppCompatActivity {
                     .filter(new Predicate<Feed.FeedItem>() {
                         @Override
                         public boolean test(Feed.FeedItem feedItem) throws Exception {
-                            return feedItem.type.equals("status") ||
-                                    feedItem.type.equals("photo") ||
-                                    feedItem.type.equals("video");
+                            return feedItem.type.equals("photo") ;
                         }
                     })
                     .subscribe(new Observer<Feed.FeedItem>() {
@@ -124,7 +128,7 @@ public class FeedListActivity extends AppCompatActivity {
                             Log.v("COBALT", "Page Feed onNext");
                             Log.v("COBALT", "Feed: " + value);
 
-                            updateFeedList(value);
+                            updatePhotoList(value);
                         }
 
                         @Override
@@ -142,70 +146,51 @@ public class FeedListActivity extends AppCompatActivity {
         }
     }
 
-    public void updateFeedList(Feed.FeedItem newFeedItem) {
-        feedList.add(newFeedItem);
+    public void updatePhotoList(Feed.FeedItem newFeedItem) {
+        photoList.add(newFeedItem);
         mAdapter.notifyDataSetChanged();
     }
 
-
-
-    public void menuButtonClicked(View view) {
-        Intent menuIntent = new Intent(getApplicationContext(), MenuActivity.class);
-        startActivity(menuIntent);
-    }
-
-    public class FeedListAdapter extends RecyclerView.Adapter<FeedListAdapter.ViewHolder> {
+    public class PhotoListAdapter extends RecyclerView.Adapter<PhotoListAdapter.ViewHolder> {
         private ArrayList<Feed.FeedItem> mDataset;
 
         // Provide a reference to the views for each data item
         // Complex data items may need more than one view per item, and
         // you provide access to all the views for a data item in a view holder
-         class ViewHolder extends RecyclerView.ViewHolder {
+        class ViewHolder extends RecyclerView.ViewHolder {
             // each data item is just a string in this case
-            TextView mPostOwner;
-            TextView mPostMessage;
-            TextView mPostLink;
-            TextView mPostStory;
             ImageView mPostImage;
             CompositeDisposable disposable = new CompositeDisposable();
             ViewHolder(CardView v) {
                 super(v);
-                mPostOwner = (TextView) v.findViewById(R.id.post_owner_text);
-                mPostMessage = (TextView) v.findViewById(R.id.post_message_text);
-                mPostStory = (TextView) v.findViewById(R.id.post_story_text);
-                mPostLink = (TextView) v.findViewById(R.id.post_link_text);
-                mPostImage = (ImageView) v.findViewById(R.id.post_imageview);
+                mPostImage = (ImageView) v.findViewById(R.id.photolist_image);
 
             }
         }
 
         // Provide a suitable constructor (depends on the kind of dataset)
-        public FeedListAdapter(ArrayList<Feed.FeedItem> myDataset) {
+        public PhotoListAdapter(ArrayList<Feed.FeedItem> myDataset) {
             mDataset = myDataset;
         }
 
         // Create new views (invoked by the layout manager)
         @Override
-        public FeedListAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
-                                                             int viewType) {
+        public PhotoListAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
+                                                                              int viewType) {
             // create a new view
             CardView v = (CardView) LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.layout_feedlist, parent, false);
+                    .inflate(R.layout.layout_photolist, parent, false);
             // set the view's size, margins, paddings and layout parameters
-            ViewHolder vh = new ViewHolder(v);
+            PhotoListAdapter.ViewHolder vh = new PhotoListAdapter.ViewHolder(v);
             return vh;
         }
 
         // Replace the contents of a view (invoked by the layout manager)
         @Override
-        public void onBindViewHolder(final ViewHolder holder, int position) {
+        public void onBindViewHolder(final PhotoListAdapter.ViewHolder holder, int position) {
             // - get element from your dataset at this position
             // - replace the contents of the view with that element
             Feed.FeedItem item = mDataset.get(position);
-
-            holder.mPostOwner.setText(item.from.getName());
-            holder.mPostMessage.setText(item.message);
-            holder.mPostStory.setText(item.story);
 
             if(item.type.equals("photo")) {
                 final String photoId = item.object_id;
@@ -236,17 +221,13 @@ public class FeedListActivity extends AppCompatActivity {
                         });
 
             }
-            if(item.type.equals("link")) {
-                holder.mPostLink.setText(item.link);
 
-            }
         }
 
         @Override
-        public void onViewRecycled(ViewHolder holder) {
+        public void onViewRecycled(PhotoListAdapter.ViewHolder holder) {
             super.onViewRecycled(holder);
             holder.mPostImage.setImageDrawable(null);
-            holder.mPostLink.setText("");
             holder.disposable.clear();
         }
 
@@ -256,9 +237,5 @@ public class FeedListActivity extends AppCompatActivity {
             return mDataset.size();
         }
 
-
     }
-
-
-
 }

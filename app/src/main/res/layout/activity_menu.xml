@@ -10,11 +10,20 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.jalepo.cobalt.MenuActivity">
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/photos_button"
+        android:text="@string/photos"
+        android:onClick="photosButtonClicked"/>
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_below="@id/photos_button"
         android:id="@+id/logout_button"
         android:text="@string/logout"
         android:onClick="logoutButtonClicked"/>
+
+
 </RelativeLayout>

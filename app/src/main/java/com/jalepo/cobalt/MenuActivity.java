@@ -23,4 +23,8 @@ public class MenuActivity extends AppCompatActivity {
     }
 
 
+    public void photosButtonClicked(View view) {
+        Intent photosIntent = new Intent(getApplicationContext(), PhotoListActivity.class);
+        startActivity(photosIntent);
+    }
 }

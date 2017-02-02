@@ -38,7 +38,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".FeedListActivity" />
-        <activity android:name=".MenuActivity"></activity>
+        <activity android:name=".MenuActivity" />
+        <activity android:name=".PhotoListActivity"></activity>
     </application>
 
 </manifest>
