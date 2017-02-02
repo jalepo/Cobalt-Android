@@ -11,7 +11,6 @@ import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
 import com.facebook.appevents.AppEventsLogger;
-import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 
@@ -39,7 +38,7 @@ public class FBLoginActivity extends AppCompatActivity {
 
         if(AccessToken.getCurrentAccessToken() == null) {
             loginButton.setVisibility(View.VISIBLE);
-            loginButton.setReadPermissions("email", "user_posts", "user_photos");
+            loginButton.setReadPermissions("email", "user_posts", "user_photos", "user_friends");
 
 
             mCallbackManager = CallbackManager.Factory.create();
@@ -61,7 +60,7 @@ public class FBLoginActivity extends AppCompatActivity {
 
             });
         } else {
-            // If the user is already logged in, hide the login button and launch the ListActivity
+            // If the user is already logged in, hide the login button and launch the FeedListActivity
             loginButton.setVisibility(View.GONE);
             launchListActivity();
         }
@@ -75,7 +74,7 @@ public class FBLoginActivity extends AppCompatActivity {
     }
 
     public void launchListActivity() {
-        Intent listActivityIntent = new Intent(getApplicationContext(), ListActivity.class);
+        Intent listActivityIntent = new Intent(getApplicationContext(), FeedListActivity.class);
         startActivity(listActivityIntent);
     }
 }

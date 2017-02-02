@@ -26,7 +26,7 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
-public class ListActivity extends AppCompatActivity {
+public class FeedListActivity extends AppCompatActivity {
 
     private RecyclerView mRecyclerView;
     private RecyclerView.Adapter mAdapter;
@@ -125,13 +125,17 @@ public class ListActivity extends AppCompatActivity {
             TextView mPostOwner;
             TextView mPostMessage;
             TextView mPostLink;
+            TextView mPostStory;
             ImageView mPostImage;
             CompositeDisposable disposable = new CompositeDisposable();
             ViewHolder(CardView v) {
                 super(v);
                 mPostOwner = (TextView) v.findViewById(R.id.post_owner_text);
                 mPostMessage = (TextView) v.findViewById(R.id.post_message_text);
+                mPostStory = (TextView) v.findViewById(R.id.post_story_text);
+                mPostLink = (TextView) v.findViewById(R.id.post_link_text);
                 mPostImage = (ImageView) v.findViewById(R.id.post_imageview);
+
             }
         }
 
@@ -161,6 +165,7 @@ public class ListActivity extends AppCompatActivity {
 
             holder.mPostOwner.setText(item.from.getName());
             holder.mPostMessage.setText(item.message);
+            holder.mPostStory.setText(item.story);
 
             if(item.type.equals("photo")) {
                 final String photoId = item.object_id;
@@ -191,12 +196,17 @@ public class ListActivity extends AppCompatActivity {
                         });
 
             }
+            if(item.type.equals("link")) {
+                holder.mPostLink.setText(item.link);
+
+            }
         }
 
         @Override
         public void onViewRecycled(ViewHolder holder) {
             super.onViewRecycled(holder);
             holder.mPostImage.setImageDrawable(null);
+            holder.mPostLink.setText("");
             holder.disposable.clear();
         }
 

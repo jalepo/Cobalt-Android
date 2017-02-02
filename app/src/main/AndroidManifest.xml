@@ -37,7 +37,7 @@
                 <data android:scheme="@string/fb_login_protocol_scheme" />
             </intent-filter>
         </activity>
-        <activity android:name=".ListActivity" />
+        <activity android:name=".FeedListActivity" />
         <activity android:name=".MenuActivity"></activity>
     </application>
 

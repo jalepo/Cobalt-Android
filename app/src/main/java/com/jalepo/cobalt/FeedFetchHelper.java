@@ -2,28 +2,16 @@ package com.jalepo.cobalt;
 
 import android.util.Log;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParseException;
 import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
-
 import io.reactivex.Observable;
-import io.reactivex.ObservableSource;
 import io.reactivex.Observer;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Function;
+import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
-import retrofit2.Call;
 import retrofit2.Retrofit;
 
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -35,11 +23,11 @@ import retrofit2.http.Query;
 
 public class FeedFetchHelper {
 
-    ListActivity ownerActivity;
+    FeedListActivity ownerActivity;
     String pageId;
     String accessToken;
 
-    FeedFetchHelper(ListActivity activity) {
+    FeedFetchHelper(FeedListActivity activity) {
         ownerActivity = activity;
     }
 
@@ -60,7 +48,7 @@ public class FeedFetchHelper {
     public void getPageFeed(String page_id, String access_token) {
         pageId = page_id;
         accessToken = access_token;
-        String feedFields = "id,from,link,object_id,message,type,name,created_time,updated_time";
+        String feedFields = "id,from,link,object_id,message,type,name,story,created_time,updated_time";
 
         pageFeedService.getPageFeed(pageId, feedFields, accessToken)
                 .subscribeOn(Schedulers.newThread())
@@ -69,6 +57,14 @@ public class FeedFetchHelper {
                     @Override
                     public Observable<Feed.FeedItem> apply(Feed feed) throws Exception {
                         return Observable.fromIterable(feed.data);
+                    }
+                })
+                .filter(new Predicate<Feed.FeedItem>() {
+                    @Override
+                    public boolean test(Feed.FeedItem feedItem) throws Exception {
+                        return feedItem.type.equals("status") ||
+                                feedItem.type.equals("photo") ||
+                                feedItem.type.equals("video");
                     }
                 })
                 .subscribe(new Observer<Feed.FeedItem>() {
