@@ -133,7 +133,7 @@ public class PhotoListActivity extends CobaltActivity {
 
     public void updatePhotoList(Feed.FeedItem newFeedItem) {
         photoList.add(newFeedItem);
-        mAdapter.notifyDataSetChanged();
+        mAdapter.notifyItemInserted(photoList.size() - 1);
     }
 
     public class PhotoListAdapter extends RecyclerView.Adapter<PhotoListAdapter.ViewHolder> {

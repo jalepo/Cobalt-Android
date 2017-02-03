@@ -9,8 +9,25 @@ import android.view.View;
 import com.facebook.AccessToken;
 import com.facebook.Profile;
 import com.facebook.ProfileTracker;
+import com.jakewharton.rxbinding.support.v7.widget.RecyclerViewScrollEvent;
+import com.jakewharton.rxbinding.support.v7.widget.RxRecyclerView;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import io.reactivex.Observable;
+import io.reactivex.Scheduler;
+import io.reactivex.Single;
+import io.reactivex.SingleObserver;
+import io.reactivex.android.plugins.RxAndroidPlugins;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import rx.Observer;
+import rx.Subscription;
 
 public abstract class CobaltActivity extends AppCompatActivity {
     protected RecyclerView mRecyclerView;
@@ -22,8 +39,7 @@ public abstract class CobaltActivity extends AppCompatActivity {
     String nextPageLink;
     boolean loadingNextPage = false;
 
-
-
+    Subscription scrollEventSubscription;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,6 +56,29 @@ public abstract class CobaltActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
+
+
+//        scrollEventSubscription = RxRecyclerView.scrollEvents(mRecyclerView)
+//                .subscribe(new Observer<RecyclerViewScrollEvent>() {
+//                    @Override
+//                    public void onCompleted() {
+//
+//                    }
+//
+//                    @Override
+//                    public void onError(Throwable e) {
+//
+//                    }
+//
+//                    @Override
+//                    public void onNext(RecyclerViewScrollEvent recyclerViewScrollEvent) {
+//
+//                        if(!loadingNextPage && !mRecyclerView.canScrollVertically(1)) {
+//                            loadNextPage();
+//                            loadingNextPage = true;
+//                        }
+//                    }
+//                });
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
@@ -56,7 +95,7 @@ public abstract class CobaltActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         mRecyclerView.removeOnScrollListener(null);
-
+//        scrollEventSubscription.unsubscribe();
     }
 
     @Override

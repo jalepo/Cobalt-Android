@@ -45,6 +45,12 @@
             android:id="@+id/post_imageview"
             android:layout_below="@id/post_story_text"/>
 
+        <VideoView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/post_videoview"
+            android:layout_below="@id/post_imageview"/>
+
     </RelativeLayout>
 
 

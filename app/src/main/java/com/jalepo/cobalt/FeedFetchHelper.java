@@ -23,15 +23,10 @@ import retrofit2.http.Url;
 
 public class FeedFetchHelper {
 
-//    FeedListActivity ownerActivity;
-//    String pageId;
-//    String accessToken;
 
-//    FeedFetchHelper(FeedListActivity activity) {
-//        ownerActivity = activity;
-//    }
     String baseUrl = "https://graph.facebook.com/v2.8/";
     String photoFields = "id,from,images,link,name,created_time,updated_time";
+    String videoFields = "id,from,thumbnails,permalink_url,title,description,created_time,updated_time";
 
 
 
@@ -43,60 +38,10 @@ public class FeedFetchHelper {
 
     PageFeedService pageFeedService = retrofit.create(PageFeedService.class);
     PhotoDataService photoDataService = retrofit.create(PhotoDataService.class);
+    VideoDataService videoDataService = retrofit.create(VideoDataService.class);
     PaginationService paginationService = retrofit.create(PaginationService.class);
 
 
-//    public void getPageFeed(String page_id, String access_token) {
-//        pageId = page_id;
-//        accessToken = access_token;
-//        String feedFields = "id,from,link,object_id,message,type,name,story,created_time,updated_time";
-//
-//        pageFeedService.getPageFeed(pageId, feedFields, accessToken)
-//                .subscribeOn(Schedulers.newThread())
-//                .observeOn(AndroidSchedulers.mainThread())
-//                .flatMap(new Function<Feed, Observable<Feed.FeedItem>>() {
-//                    @Override
-//                    public Observable<Feed.FeedItem> apply(Feed feed) throws Exception {
-//                        return Observable.fromIterable(feed.data);
-//                    }
-//                })
-//                .filter(new Predicate<Feed.FeedItem>() {
-//                    @Override
-//                    public boolean test(Feed.FeedItem feedItem) throws Exception {
-//                        return feedItem.type.equals("status") ||
-//                                feedItem.type.equals("photo") ||
-//                                feedItem.type.equals("video");
-//                    }
-//                })
-//                .subscribe(new Observer<Feed.FeedItem>() {
-//                    @Override
-//                    public void onSubscribe(Disposable d) {
-//                        Log.v("COBALT", "Page Feed onSubscribe");
-//                    }
-//
-//                    @Override
-//                    public void onNext(Feed.FeedItem value) {
-//                        Log.v("COBALT", "Page Feed onNext");
-//                        Log.v("COBALT", "Feed: " + value);
-//
-////                        ownerActivity.updateFeedList(value);
-//                    }
-//
-//                    @Override
-//                    public void onError(Throwable e) {
-//                        Log.v("COBALT", "Page Feed onError: " + e.getLocalizedMessage());
-//
-//                    }
-//
-//                    @Override
-//                    public void onComplete() {
-//                        Log.v("COBALT", "Page Feed onComplete");
-//
-//                    }
-//                });
-//
-//
-//    }
 
 
     public interface PageFeedService {
@@ -112,6 +57,14 @@ public class FeedFetchHelper {
                                        @Query("fields") String fields,
                                        @Query("access_token") String accessToken);
     }
+
+    public interface VideoDataService {
+        @GET("{video_id}")
+        Single<Videos.Video> getVideos(@Path("video_id") String videoId,
+                                       @Query("fields") String fields,
+                                       @Query("access_token") String accessToken);
+    }
+
 
     public interface PaginationService {
         @GET

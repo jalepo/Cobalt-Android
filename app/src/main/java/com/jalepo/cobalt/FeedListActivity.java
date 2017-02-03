@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.VideoView;
 
 import com.facebook.AccessToken;
 import com.facebook.Profile;
@@ -129,7 +130,7 @@ public class FeedListActivity extends CobaltActivity {
 
     public void updateFeedList(Feed.FeedItem newFeedItem) {
         feedList.add(newFeedItem);
-        mAdapter.notifyDataSetChanged();
+        mAdapter.notifyItemInserted(feedList.size() - 1);
     }
 
 
@@ -149,6 +150,7 @@ public class FeedListActivity extends CobaltActivity {
             TextView mPostLink;
             TextView mPostStory;
             ImageView mPostImage;
+            VideoView mPostVideo;
             CompositeDisposable disposable = new CompositeDisposable();
             ViewHolder(CardView v) {
                 super(v);
@@ -157,7 +159,7 @@ public class FeedListActivity extends CobaltActivity {
                 mPostStory = (TextView) v.findViewById(R.id.post_story_text);
                 mPostLink = (TextView) v.findViewById(R.id.post_link_text);
                 mPostImage = (ImageView) v.findViewById(R.id.post_imageview);
-
+                mPostVideo = (VideoView) v.findViewById(R.id.post_videoview);
             }
         }
 
@@ -218,9 +220,33 @@ public class FeedListActivity extends CobaltActivity {
                         });
 
             }
-            if(item.type.equals("link")) {
-                holder.mPostLink.setText(item.link);
+            if(item.type.equals("video")) {
+                final String videoId = item.object_id;
+                feedFetchHelper.videoDataService.getVideos(videoId,
+                        feedFetchHelper.videoFields, accessToken)
+                        .subscribeOn(Schedulers.newThread())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(new SingleObserver<Videos.Video>() {
+                            @Override
+                            public void onSubscribe(Disposable d) {
+                                holder.disposable.add(d);
+                            }
 
+                            @Override
+                            public void onSuccess(Videos.Video value) {
+                                if(value.thumbnails != null) {
+                                    String url = value.thumbnails.data.get(0).uri;
+                                    Picasso.with(getApplicationContext())
+                                            .load(url)
+                                            .into(holder.mPostImage);
+                                }
+                            }
+
+                            @Override
+                            public void onError(Throwable e) {
+
+                            }
+                        });
             }
         }
 
