@@ -34,106 +34,29 @@ import io.reactivex.schedulers.Schedulers;
 
 public class FeedListActivity extends CobaltActivity {
 
-    private RecyclerView.Adapter mAdapter;
-
-
-    ArrayList<Feed.FeedItem> feedList = new ArrayList<>();
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_feedlist);
-
         mRecyclerView = (RecyclerView) findViewById(R.id.feed_list_view);
 
-        // use this setting to improve performance if you know that changes
-        // in content do not change the layout size of the RecyclerView
         mRecyclerView.setHasFixedSize(true);
 
-        // use a linear layout manager
-        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(this);
-        mRecyclerView.setLayoutManager(mLayoutManager);
-
-        mAdapter = new FeedListAdapter(feedList);
+        mAdapter = new FeedListAdapter(dataList);
         mRecyclerView.setAdapter(mAdapter);
 
-
+        feedFilter = new Predicate<Feed.FeedItem>() {
+            @Override
+            public boolean test(Feed.FeedItem feedItem) throws Exception {
+                return feedItem.type.equals("status") ||
+                        feedItem.type.equals("photo") ||
+                        feedItem.type.equals("video");
+            }
+        };
     }
-
-
-
-    @Override
-    public void loadFirstPage() {
-        if(Profile.getCurrentProfile() != null) {
-            String pageId = Profile.getCurrentProfile().getId();
-            String feedFields = "id,from,link,object_id,message,type,name,story,created_time,updated_time";
-            subscribeToFeed(feedFetchHelper.pageFeedService.getPageFeed(pageId, feedFields, accessToken));
-
-        }
-    }
-
-    @Override
-    public void loadNextPage() {
-        if(nextPageLink != null) {
-
-            subscribeToFeed(feedFetchHelper.paginationService.getPage(nextPageLink.trim()));
-
-        }
-    }
-
-    public void subscribeToFeed(Observable<Feed> feedObservable) {
-        feedObservable.subscribeOn(Schedulers.newThread())
-                .observeOn(AndroidSchedulers.mainThread())
-                .flatMap(new Function<Feed, Observable<Feed.FeedItem>>() {
-                    @Override
-                    public Observable<Feed.FeedItem> apply(Feed feed) throws Exception {
-                        nextPageLink = feed.paging.next;
-                        loadingNextPage = false;
-                        return Observable.fromIterable(feed.data);
-                    }
-                })
-                .filter(new Predicate<Feed.FeedItem>() {
-                    @Override
-                    public boolean test(Feed.FeedItem feedItem) throws Exception {
-                        return feedItem.type.equals("status") ||
-                                feedItem.type.equals("photo") ||
-                                feedItem.type.equals("video");
-                    }
-                })
-                .subscribe(new Observer<Feed.FeedItem>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
-                        Log.v("COBALT", "Page Feed onSubscribe");
-                        disposable.add(d);
-                    }
-
-                    @Override
-                    public void onNext(Feed.FeedItem value) {
-                        Log.v("COBALT", "Page Feed onNext");
-                        updateFeedList(value);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        Log.v("COBALT", "Page Feed onError: " + e.getLocalizedMessage());
-
-                    }
-
-                    @Override
-                    public void onComplete() {
-                        Log.v("COBALT", "Page Feed onComplete");
-
-                    }
-                });
-    }
-
-    public void updateFeedList(Feed.FeedItem newFeedItem) {
-        feedList.add(newFeedItem);
-        mAdapter.notifyItemInserted(feedList.size() - 1);
-    }
-
 
 
 

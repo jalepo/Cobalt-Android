@@ -25,6 +25,7 @@ public class FeedFetchHelper {
 
 
     String baseUrl = "https://graph.facebook.com/v2.8/";
+    String feedFields = "id,from,link,object_id,message,type,name,story,created_time,updated_time";
     String photoFields = "id,from,images,link,name,created_time,updated_time";
     String videoFields = "id,from,thumbnails,permalink_url,title,description,created_time,updated_time";
 

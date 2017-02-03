@@ -32,10 +32,6 @@ import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 
 public class PhotoListActivity extends CobaltActivity {
-    private RecyclerView.Adapter mAdapter;
-
-    ArrayList<Feed.FeedItem> photoList = new ArrayList<>();
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,19 +40,20 @@ public class PhotoListActivity extends CobaltActivity {
 
         mRecyclerView = (RecyclerView) findViewById(R.id.photo_list_view);
 
-        // use this setting to improve performance if you know that changes
-        // in content do not change the layout size of the RecyclerView
         mRecyclerView.setHasFixedSize(true);
 
-        // use a linear layout manager
-        RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(this, 3,
-                GridLayoutManager.VERTICAL, false);
+        ((GridLayoutManager) mRecyclerView.getLayoutManager()).setSpanCount(3);
+        ((GridLayoutManager) mRecyclerView.getLayoutManager()).setOrientation(GridLayoutManager.VERTICAL);
 
-        mRecyclerView.setLayoutManager(mLayoutManager);
-
-        mAdapter = new PhotoListActivity.PhotoListAdapter(photoList);
+        mAdapter = new PhotoListActivity.PhotoListAdapter(dataList);
         mRecyclerView.setAdapter(mAdapter);
 
+        feedFilter = new Predicate<Feed.FeedItem>() {
+            @Override
+            public boolean test(Feed.FeedItem feedItem) throws Exception {
+                return feedItem.type.equals("photo")  && feedItem.object_id != null;
+            }
+        };
 
     }
 
@@ -64,77 +61,6 @@ public class PhotoListActivity extends CobaltActivity {
 
 
 
-    @Override
-    public void loadFirstPage() {
-        if(Profile.getCurrentProfile() != null) {
-            String pageId = Profile.getCurrentProfile().getId();
-            String feedFields = "id,from,link,object_id,message,type,name,story,created_time,updated_time";
-            subscribeToFeed(feedFetchHelper.pageFeedService.getPageFeed(pageId, feedFields, accessToken));
-
-        }
-    }
-
-
-
-    @Override
-    public void loadNextPage( ) {
-        if(nextPageLink != null) {
-
-            subscribeToFeed(feedFetchHelper.paginationService.getPage(nextPageLink.trim()));
-
-        }
-
-    }
-
-    public void subscribeToFeed(Observable<Feed> observable) {
-        observable.subscribeOn(Schedulers.newThread())
-                .observeOn(AndroidSchedulers.mainThread())
-                .flatMap(new Function<Feed, Observable<Feed.FeedItem>>() {
-                    @Override
-                    public Observable<Feed.FeedItem> apply(Feed feed) throws Exception {
-                        nextPageLink = feed.paging.next;
-                        loadingNextPage = false;
-                        return Observable.fromIterable(feed.data);
-                    }
-                })
-                .filter(new Predicate<Feed.FeedItem>() {
-                    @Override
-                    public boolean test(Feed.FeedItem feedItem) throws Exception {
-                        return feedItem.type.equals("photo")  && feedItem.object_id != null;
-                    }
-                })
-                .subscribe(new Observer<Feed.FeedItem>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
-                        Log.v("COBALT", "Page Feed onSubscribe");
-                        disposable.add(d);
-                    }
-
-                    @Override
-                    public void onNext(Feed.FeedItem value) {
-                        Log.v("COBALT", "Page Feed onNext");
-                        updatePhotoList(value);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        Log.v("COBALT", "Page Feed onError: " + e.getLocalizedMessage());
-
-                    }
-
-                    @Override
-                    public void onComplete() {
-                        Log.v("COBALT", "Page Feed onComplete");
-
-                    }
-                });
-
-    }
-
-    public void updatePhotoList(Feed.FeedItem newFeedItem) {
-        photoList.add(newFeedItem);
-        mAdapter.notifyItemInserted(photoList.size() - 1);
-    }
 
     public class PhotoListAdapter extends RecyclerView.Adapter<PhotoListAdapter.ViewHolder> {
         private ArrayList<Feed.FeedItem> mDataset;
