@@ -27,4 +27,9 @@ public class MenuActivity extends AppCompatActivity {
         Intent photosIntent = new Intent(getApplicationContext(), PhotoListActivity.class);
         startActivity(photosIntent);
     }
+
+    public void videosButtonClicked(View view) {
+        Intent videosIntent = new Intent(getApplicationContext(), VideoListActivity.class);
+        startActivity(videosIntent);
+    }
 }

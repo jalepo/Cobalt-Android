@@ -20,7 +20,15 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:id="@+id/videos_button"
+        android:text="@string/videos"
         android:layout_below="@id/photos_button"
+        android:onClick="videosButtonClicked"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/videos_button"
         android:id="@+id/logout_button"
         android:text="@string/logout"
         android:onClick="logoutButtonClicked"/>

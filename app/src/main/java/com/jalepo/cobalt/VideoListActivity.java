@@ -1,22 +1,16 @@
 package com.jalepo.cobalt;
 
-import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.TextView;
 
-import com.facebook.AccessToken;
 import com.facebook.Profile;
-import com.facebook.ProfileTracker;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -31,18 +25,17 @@ import io.reactivex.functions.Function;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 
-public class PhotoListActivity extends CobaltActivity {
+public class VideoListActivity extends CobaltActivity {
     private RecyclerView.Adapter mAdapter;
 
-    ArrayList<Feed.FeedItem> photoList = new ArrayList<>();
-
+    ArrayList<Feed.FeedItem> videoList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_photo_list);
+        setContentView(R.layout.activity_video_list);
 
-        mRecyclerView = (RecyclerView) findViewById(R.id.photo_list_view);
+        mRecyclerView = (RecyclerView) findViewById(R.id.video_list_view);
 
         // use this setting to improve performance if you know that changes
         // in content do not change the layout size of the RecyclerView
@@ -54,15 +47,9 @@ public class PhotoListActivity extends CobaltActivity {
 
         mRecyclerView.setLayoutManager(mLayoutManager);
 
-        mAdapter = new PhotoListActivity.PhotoListAdapter(photoList);
+        mAdapter = new VideoListAdapter(videoList);
         mRecyclerView.setAdapter(mAdapter);
-
-
     }
-
-
-
-
 
     @Override
     public void loadFirstPage() {
@@ -74,16 +61,11 @@ public class PhotoListActivity extends CobaltActivity {
         }
     }
 
-
-
     @Override
     public void loadNextPage( ) {
         if(nextPageLink != null) {
-
             subscribeToFeed(feedFetchHelper.paginationService.getPage(nextPageLink.trim()));
-
         }
-
     }
 
     public void subscribeToFeed(Observable<Feed> observable) {
@@ -93,14 +75,13 @@ public class PhotoListActivity extends CobaltActivity {
                     @Override
                     public Observable<Feed.FeedItem> apply(Feed feed) throws Exception {
                         nextPageLink = feed.paging.next;
-                        loadingNextPage = false;
                         return Observable.fromIterable(feed.data);
                     }
                 })
                 .filter(new Predicate<Feed.FeedItem>() {
                     @Override
                     public boolean test(Feed.FeedItem feedItem) throws Exception {
-                        return feedItem.type.equals("photo")  && feedItem.object_id != null;
+                        return feedItem.type.equals("video") && feedItem.object_id != null;
                     }
                 })
                 .subscribe(new Observer<Feed.FeedItem>() {
@@ -113,7 +94,7 @@ public class PhotoListActivity extends CobaltActivity {
                     @Override
                     public void onNext(Feed.FeedItem value) {
                         Log.v("COBALT", "Page Feed onNext");
-                        updatePhotoList(value);
+                        updateVideoList(value);
                     }
 
                     @Override
@@ -125,18 +106,19 @@ public class PhotoListActivity extends CobaltActivity {
                     @Override
                     public void onComplete() {
                         Log.v("COBALT", "Page Feed onComplete");
+                        loadingNextPage = false;
 
                     }
                 });
 
     }
 
-    public void updatePhotoList(Feed.FeedItem newFeedItem) {
-        photoList.add(newFeedItem);
-        mAdapter.notifyItemInserted(photoList.size() - 1);
+    public void updateVideoList(Feed.FeedItem newFeedItem) {
+        videoList.add(newFeedItem);
+        mAdapter.notifyItemInserted(videoList.size() - 1);
     }
 
-    public class PhotoListAdapter extends RecyclerView.Adapter<PhotoListAdapter.ViewHolder> {
+    public class VideoListAdapter extends RecyclerView.Adapter<VideoListAdapter.ViewHolder> {
         private ArrayList<Feed.FeedItem> mDataset;
 
         // Provide a reference to the views for each data item
@@ -154,45 +136,37 @@ public class PhotoListActivity extends CobaltActivity {
         }
 
         // Provide a suitable constructor (depends on the kind of dataset)
-        public PhotoListAdapter(ArrayList<Feed.FeedItem> myDataset) {
+        public VideoListAdapter(ArrayList<Feed.FeedItem> myDataset) {
             mDataset = myDataset;
         }
 
-        // Create new views (invoked by the layout manager)
         @Override
-        public PhotoListAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
-                                                                              int viewType) {
-            // create a new view
+        public VideoListAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             CardView v = (CardView) LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.layout_photolist, parent, false);
             // set the view's size, margins, paddings and layout parameters
-            PhotoListAdapter.ViewHolder vh = new PhotoListAdapter.ViewHolder(v);
-            return vh;
-        }
+            ViewHolder vh = new ViewHolder(v);
+            return vh;        }
 
-        // Replace the contents of a view (invoked by the layout manager)
         @Override
-        public void onBindViewHolder(final PhotoListAdapter.ViewHolder holder, int position) {
-            // - get element from your dataset at this position
-            // - replace the contents of the view with that element
+        public void onBindViewHolder(final ViewHolder holder, int position) {
             Feed.FeedItem item = mDataset.get(position);
-
-            if(item.type.equals("photo")) {
-                final String photoId = item.object_id;
-                feedFetchHelper.photoDataService.getPhotos(photoId,
-                        feedFetchHelper.photoFields, accessToken)
+            if(item.type.equals("video")) {
+                final String videoId = item.object_id;
+                feedFetchHelper.videoDataService.getVideos(videoId,
+                        feedFetchHelper.videoFields, accessToken)
                         .subscribeOn(Schedulers.newThread())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new SingleObserver<Photos.Photo>() {
+                        .subscribe(new SingleObserver<Videos.Video>() {
                             @Override
                             public void onSubscribe(Disposable d) {
                                 holder.disposable.add(d);
                             }
 
                             @Override
-                            public void onSuccess(Photos.Photo value) {
-                                if(value.images != null) {
-                                    String url = value.images.get(0).source;
+                            public void onSuccess(Videos.Video value) {
+                                if(value.thumbnails != null) {
+                                    String url = value.thumbnails.data.get(0).uri;
                                     Picasso.with(getApplicationContext())
                                             .load(url)
                                             .into(holder.mPostImage);
@@ -204,13 +178,11 @@ public class PhotoListActivity extends CobaltActivity {
 
                             }
                         });
-
             }
-
         }
 
         @Override
-        public void onViewRecycled(PhotoListAdapter.ViewHolder holder) {
+        public void onViewRecycled(ViewHolder holder) {
             super.onViewRecycled(holder);
             holder.mPostImage.setImageDrawable(null);
             holder.disposable.clear();
@@ -221,6 +193,5 @@ public class PhotoListActivity extends CobaltActivity {
         public int getItemCount() {
             return mDataset.size();
         }
-
     }
 }

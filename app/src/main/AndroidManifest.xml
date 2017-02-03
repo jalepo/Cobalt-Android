@@ -40,7 +40,8 @@
         <activity android:name=".FeedListActivity" />
         <activity android:name=".MenuActivity" />
         <activity android:name=".PhotoListActivity" />
-        <activity android:name=".CobaltActivity"></activity>
+        <activity android:name=".CobaltActivity" />
+        <activity android:name=".VideoListActivity"></activity>
     </application>
 
 </manifest>

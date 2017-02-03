@@ -184,7 +184,7 @@ public class FeedListActivity extends CobaltActivity {
         public void onBindViewHolder(final ViewHolder holder, int position) {
             // - get element from your dataset at this position
             // - replace the contents of the view with that element
-            Feed.FeedItem item = mDataset.get(position);
+            Feed.FeedItem item = (Feed.FeedItem) mDataset.get(position);
 
             holder.mPostOwner.setText(item.from.getName());
             holder.mPostMessage.setText(item.message);
@@ -271,7 +271,6 @@ public class FeedListActivity extends CobaltActivity {
             }
 
             Observable.interval(1, 1, TimeUnit.SECONDS)
-                    .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Observer<Long>() {
                         int displayIndex = 0;

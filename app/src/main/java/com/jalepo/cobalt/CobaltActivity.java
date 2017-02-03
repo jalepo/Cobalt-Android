@@ -12,6 +12,7 @@ import com.facebook.ProfileTracker;
 import com.jakewharton.rxbinding.support.v7.widget.RecyclerViewScrollEvent;
 import com.jakewharton.rxbinding.support.v7.widget.RxRecyclerView;
 
+import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +41,8 @@ public abstract class CobaltActivity extends AppCompatActivity {
     boolean loadingNextPage = false;
 
     Subscription scrollEventSubscription;
+    protected ArrayList<?> dataList = new ArrayList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
