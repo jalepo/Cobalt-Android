@@ -20,6 +20,7 @@ import com.facebook.ProfileTracker;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
 import io.reactivex.Observer;
@@ -150,7 +151,6 @@ public class FeedListActivity extends CobaltActivity {
             TextView mPostLink;
             TextView mPostStory;
             ImageView mPostImage;
-            VideoView mPostVideo;
             CompositeDisposable disposable = new CompositeDisposable();
             ViewHolder(CardView v) {
                 super(v);
@@ -159,7 +159,6 @@ public class FeedListActivity extends CobaltActivity {
                 mPostStory = (TextView) v.findViewById(R.id.post_story_text);
                 mPostLink = (TextView) v.findViewById(R.id.post_link_text);
                 mPostImage = (ImageView) v.findViewById(R.id.post_imageview);
-                mPostVideo = (VideoView) v.findViewById(R.id.post_videoview);
             }
         }
 
@@ -239,6 +238,7 @@ public class FeedListActivity extends CobaltActivity {
                                     Picasso.with(getApplicationContext())
                                             .load(url)
                                             .into(holder.mPostImage);
+                                    cycleThumbnails(value, holder);
                                 }
                             }
 
@@ -264,6 +264,44 @@ public class FeedListActivity extends CobaltActivity {
             return mDataset.size();
         }
 
+        public void cycleThumbnails(final Videos.Video video, final ViewHolder holder) {
+            for(Videos.Video.Thumbnails.Thumbnail thumb: video.thumbnails.data) {
+                Picasso.with(getApplicationContext()).load(thumb.uri).fetch();
+            }
+            Observable.interval(1, 1, TimeUnit.SECONDS)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Observer<Long>() {
+                        int displayIndex = 0;
+                        @Override
+                        public void onSubscribe(Disposable d) {
+                            holder.disposable.add(d);
+                        }
+
+                        @Override
+                        public void onNext(Long value) {
+                            if(displayIndex < video.thumbnails.data.size() - 1) {
+                                displayIndex++;
+                            } else {
+                                displayIndex = 0;
+                            }
+                            String url = video.thumbnails.data.get(displayIndex).uri;
+                            Picasso.with(getApplicationContext())
+                                    .load(url)
+                                    .into(holder.mPostImage);
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+
+                        }
+
+                        @Override
+                        public void onComplete() {
+
+                        }
+                    });
+        }
 
     }
 
