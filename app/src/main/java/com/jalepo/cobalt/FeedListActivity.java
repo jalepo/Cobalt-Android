@@ -265,9 +265,11 @@ public class FeedListActivity extends CobaltActivity {
         }
 
         public void cycleThumbnails(final Videos.Video video, final ViewHolder holder) {
+            // Fetch the thumbnails into Picasso's cache, for smoother cycling
             for(Videos.Video.Thumbnails.Thumbnail thumb: video.thumbnails.data) {
                 Picasso.with(getApplicationContext()).load(thumb.uri).fetch();
             }
+
             Observable.interval(1, 1, TimeUnit.SECONDS)
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
