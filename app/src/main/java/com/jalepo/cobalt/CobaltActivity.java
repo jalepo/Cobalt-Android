@@ -58,44 +58,44 @@ public abstract class CobaltActivity extends AppCompatActivity {
 
 
 
-//        scrollEventSubscription = RxRecyclerView.scrollEvents(mRecyclerView)
-//                .subscribe(new Observer<RecyclerViewScrollEvent>() {
-//                    @Override
-//                    public void onCompleted() {
-//
-//                    }
-//
-//                    @Override
-//                    public void onError(Throwable e) {
-//
-//                    }
-//
-//                    @Override
-//                    public void onNext(RecyclerViewScrollEvent recyclerViewScrollEvent) {
-//
-//                        if(!loadingNextPage && !mRecyclerView.canScrollVertically(1)) {
-//                            loadNextPage();
-//                            loadingNextPage = true;
-//                        }
-//                    }
-//                });
-        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-                if(!loadingNextPage && !recyclerView.canScrollVertically(1)) {
-                    loadNextPage();
-                    loadingNextPage = true;
-                }
-            }
-        });
+        scrollEventSubscription = RxRecyclerView.scrollEvents(mRecyclerView)
+                .subscribe(new Observer<RecyclerViewScrollEvent>() {
+                    @Override
+                    public void onCompleted() {
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onNext(RecyclerViewScrollEvent recyclerViewScrollEvent) {
+
+                        if(!loadingNextPage && !mRecyclerView.canScrollVertically(1)) {
+                            loadNextPage();
+                            loadingNextPage = true;
+                        }
+                    }
+                });
+//        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+//            @Override
+//            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+//                super.onScrolled(recyclerView, dx, dy);
+//                if(!loadingNextPage && !recyclerView.canScrollVertically(1)) {
+//                    loadNextPage();
+//                    loadingNextPage = true;
+//                }
+//            }
+//        });
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        mRecyclerView.removeOnScrollListener(null);
-//        scrollEventSubscription.unsubscribe();
+//        mRecyclerView.removeOnScrollListener(null);
+        scrollEventSubscription.unsubscribe();
     }
 
     @Override
