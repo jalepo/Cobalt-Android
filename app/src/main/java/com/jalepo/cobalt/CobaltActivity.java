@@ -1,18 +1,21 @@
 package com.jalepo.cobalt;
 
 import android.content.Intent;
+import android.media.Image;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 
 import com.facebook.AccessToken;
 import com.facebook.Profile;
 import com.facebook.ProfileTracker;
 import com.jakewharton.rxbinding.support.v7.widget.RecyclerViewScrollEvent;
 import com.jakewharton.rxbinding.support.v7.widget.RxRecyclerView;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
@@ -209,4 +212,34 @@ public abstract class CobaltActivity extends AppCompatActivity {
         mAdapter.notifyItemInserted(dataList.size() - 1);
     }
 
+    public void getRemoteImage(final ImageView imageView, String objectId, final CompositeDisposable disposable) {
+
+        feedFetchHelper.photoDataService.getPhotos(objectId,
+                feedFetchHelper.photoFields, accessToken)
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new SingleObserver<Photos.Photo>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        disposable.add(d);
+                    }
+
+                    @Override
+                    public void onSuccess(Photos.Photo value) {
+                        if(value.images != null) {
+                            String url = value.images.get(0).source;
+                            Picasso.with(getApplicationContext())
+                                    .load(url)
+                                    .into(imageView);
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+                });
+
+
+    }
 }
