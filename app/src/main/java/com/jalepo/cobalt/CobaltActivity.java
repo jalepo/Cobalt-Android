@@ -146,6 +146,7 @@ public abstract class CobaltActivity extends AppCompatActivity {
 
     public void menuButtonClicked(View view) {
         Intent menuIntent = new Intent(getApplicationContext(), MenuActivity.class);
+        menuIntent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
         startActivity(menuIntent);
     }
 
@@ -212,7 +213,9 @@ public abstract class CobaltActivity extends AppCompatActivity {
         mAdapter.notifyItemInserted(dataList.size() - 1);
     }
 
-    public void getRemoteImage(final ImageView imageView, String objectId, final CompositeDisposable disposable) {
+    public void getRemoteImage(final ImageView imageView,
+                               String objectId,
+                               final CompositeDisposable disposable) {
 
         feedFetchHelper.photoDataService.getPhotos(objectId,
                 feedFetchHelper.photoFields, accessToken)
@@ -241,5 +244,78 @@ public abstract class CobaltActivity extends AppCompatActivity {
                 });
 
 
+    }
+
+    public void getRemoteVideo(final ImageView imageView,
+                               String objectId,
+                               final CompositeDisposable disposable) {
+        feedFetchHelper.videoDataService.getVideos(objectId,
+                feedFetchHelper.videoFields, accessToken)
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new SingleObserver<Videos.Video>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        disposable.add(d);
+                    }
+
+                    @Override
+                    public void onSuccess(Videos.Video value) {
+                        if(value.thumbnails != null) {
+                            String url = value.thumbnails.data.get(0).uri;
+                            Picasso.with(getApplicationContext())
+                                    .load(url)
+                                    .into(imageView);
+                            cycleThumbnails(imageView, value, disposable);
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+                });
+    }
+
+    public void cycleThumbnails(final ImageView imageView,
+                                final Videos.Video video,
+                                final CompositeDisposable disposable) {
+        // Fetch the thumbnails into Picasso's cache, for smoother cycling
+        for(Videos.Video.Thumbnails.Thumbnail thumb: video.thumbnails.data) {
+            Picasso.with(getApplicationContext()).load(thumb.uri).fetch();
+        }
+
+        Observable.interval(1, 1, TimeUnit.SECONDS)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new io.reactivex.Observer<Long>() {
+                    int displayIndex = 0;
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        disposable.add(d);
+                    }
+
+                    @Override
+                    public void onNext(Long value) {
+                        if(displayIndex < video.thumbnails.data.size() - 1) {
+                            displayIndex++;
+                        } else {
+                            displayIndex = 0;
+                        }
+                        String url = video.thumbnails.data.get(displayIndex).uri;
+                        Picasso.with(getApplicationContext())
+                                .load(url)
+                                .into(imageView);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                });
     }
 }

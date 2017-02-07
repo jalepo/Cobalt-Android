@@ -3,6 +3,7 @@ package com.jalepo.cobalt;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.view.View;
 
 import com.facebook.AccessToken;
@@ -31,5 +32,17 @@ public class MenuActivity extends AppCompatActivity {
     public void videosButtonClicked(View view) {
         Intent videosIntent = new Intent(getApplicationContext(), VideoListActivity.class);
         startActivity(videosIntent);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        // Any touch that does not get handled by this class will dismiss the menu
+        if(!super.onTouchEvent(event)) {
+            if (event.getAction() == MotionEvent.ACTION_UP) {
+                finish();
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -113,61 +113,11 @@ public class FeedListActivity extends CobaltActivity {
             if(item.type.equals("photo")) {
                 final String photoId = item.object_id;
                 getRemoteImage(holder.mPostImage, photoId, holder.disposable);
-//                feedFetchHelper.photoDataService.getPhotos(photoId,
-//                        feedFetchHelper.photoFields, accessToken)
-//                        .subscribeOn(Schedulers.newThread())
-//                        .observeOn(AndroidSchedulers.mainThread())
-//                        .subscribe(new SingleObserver<Photos.Photo>() {
-//                            @Override
-//                            public void onSubscribe(Disposable d) {
-//                                holder.disposable.add(d);
-//                            }
-//
-//                            @Override
-//                            public void onSuccess(Photos.Photo value) {
-//                                if(value.images != null) {
-//                                    String url = value.images.get(0).source;
-//                                    Picasso.with(getApplicationContext())
-//                                            .load(url)
-//                                            .into(holder.mPostImage);
-//                                }
-//                            }
-//
-//                            @Override
-//                            public void onError(Throwable e) {
-//
-//                            }
-//                        });
-
             }
             if(item.type.equals("video")) {
                 final String videoId = item.object_id;
-                feedFetchHelper.videoDataService.getVideos(videoId,
-                        feedFetchHelper.videoFields, accessToken)
-                        .subscribeOn(Schedulers.newThread())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new SingleObserver<Videos.Video>() {
-                            @Override
-                            public void onSubscribe(Disposable d) {
-                                holder.disposable.add(d);
-                            }
+                getRemoteVideo(holder.mPostImage, videoId, holder.disposable);
 
-                            @Override
-                            public void onSuccess(Videos.Video value) {
-                                if(value.thumbnails != null) {
-                                    String url = value.thumbnails.data.get(0).uri;
-                                    Picasso.with(getApplicationContext())
-                                            .load(url)
-                                            .into(holder.mPostImage);
-                                    cycleThumbnails(value, holder);
-                                }
-                            }
-
-                            @Override
-                            public void onError(Throwable e) {
-
-                            }
-                        });
             }
         }
 
@@ -185,45 +135,7 @@ public class FeedListActivity extends CobaltActivity {
             return mDataset.size();
         }
 
-        public void cycleThumbnails(final Videos.Video video, final ViewHolder holder) {
-            // Fetch the thumbnails into Picasso's cache, for smoother cycling
-            for(Videos.Video.Thumbnails.Thumbnail thumb: video.thumbnails.data) {
-                Picasso.with(getApplicationContext()).load(thumb.uri).fetch();
-            }
 
-            Observable.interval(1, 1, TimeUnit.SECONDS)
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(new Observer<Long>() {
-                        int displayIndex = 0;
-                        @Override
-                        public void onSubscribe(Disposable d) {
-                            holder.disposable.add(d);
-                        }
-
-                        @Override
-                        public void onNext(Long value) {
-                            if(displayIndex < video.thumbnails.data.size() - 1) {
-                                displayIndex++;
-                            } else {
-                                displayIndex = 0;
-                            }
-                            String url = video.thumbnails.data.get(displayIndex).uri;
-                            Picasso.with(getApplicationContext())
-                                    .load(url)
-                                    .into(holder.mPostImage);
-                        }
-
-                        @Override
-                        public void onError(Throwable e) {
-
-                        }
-
-                        @Override
-                        public void onComplete() {
-
-                        }
-                    });
-        }
 
     }
 

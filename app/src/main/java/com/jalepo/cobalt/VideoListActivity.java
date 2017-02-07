@@ -79,38 +79,15 @@ public class VideoListActivity extends CobaltActivity {
                     .inflate(R.layout.layout_photolist, parent, false);
             // set the view's size, margins, paddings and layout parameters
             ViewHolder vh = new ViewHolder(v);
-            return vh;        }
+            return vh;
+        }
 
         @Override
         public void onBindViewHolder(final ViewHolder holder, int position) {
             Feed.FeedItem item = mDataset.get(position);
             if(item.type.equals("video")) {
                 final String videoId = item.object_id;
-                feedFetchHelper.videoDataService.getVideos(videoId,
-                        feedFetchHelper.videoFields, accessToken)
-                        .subscribeOn(Schedulers.newThread())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new SingleObserver<Videos.Video>() {
-                            @Override
-                            public void onSubscribe(Disposable d) {
-                                holder.disposable.add(d);
-                            }
-
-                            @Override
-                            public void onSuccess(Videos.Video value) {
-                                if(value.thumbnails != null) {
-                                    String url = value.thumbnails.data.get(0).uri;
-                                    Picasso.with(getApplicationContext())
-                                            .load(url)
-                                            .into(holder.mPostImage);
-                                }
-                            }
-
-                            @Override
-                            public void onError(Throwable e) {
-
-                            }
-                        });
+                getRemoteVideo(holder.mPostImage, videoId, holder.disposable);
             }
         }
 

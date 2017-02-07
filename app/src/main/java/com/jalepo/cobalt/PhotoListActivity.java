@@ -65,11 +65,8 @@ public class PhotoListActivity extends CobaltActivity {
     public class PhotoListAdapter extends RecyclerView.Adapter<PhotoListAdapter.ViewHolder> {
         private ArrayList<Feed.FeedItem> mDataset;
 
-        // Provide a reference to the views for each data item
-        // Complex data items may need more than one view per item, and
-        // you provide access to all the views for a data item in a view holder
+
         class ViewHolder extends RecyclerView.ViewHolder {
-            // each data item is just a string in this case
             ImageView mPostImage;
             CompositeDisposable disposable = new CompositeDisposable();
             ViewHolder(CardView v) {
@@ -79,7 +76,6 @@ public class PhotoListActivity extends CobaltActivity {
             }
         }
 
-        // Provide a suitable constructor (depends on the kind of dataset)
         public PhotoListAdapter(ArrayList<Feed.FeedItem> myDataset) {
             mDataset = myDataset;
         }
@@ -91,7 +87,6 @@ public class PhotoListActivity extends CobaltActivity {
             // create a new view
             CardView v = (CardView) LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.layout_photolist, parent, false);
-            // set the view's size, margins, paddings and layout parameters
             PhotoListAdapter.ViewHolder vh = new PhotoListAdapter.ViewHolder(v);
             return vh;
         }
@@ -105,32 +100,7 @@ public class PhotoListActivity extends CobaltActivity {
 
             if(item.type.equals("photo")) {
                 final String photoId = item.object_id;
-                feedFetchHelper.photoDataService.getPhotos(photoId,
-                        feedFetchHelper.photoFields, accessToken)
-                        .subscribeOn(Schedulers.newThread())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new SingleObserver<Photos.Photo>() {
-                            @Override
-                            public void onSubscribe(Disposable d) {
-                                holder.disposable.add(d);
-                            }
-
-                            @Override
-                            public void onSuccess(Photos.Photo value) {
-                                if(value.images != null) {
-                                    String url = value.images.get(0).source;
-                                    Picasso.with(getApplicationContext())
-                                            .load(url)
-                                            .into(holder.mPostImage);
-                                }
-                            }
-
-                            @Override
-                            public void onError(Throwable e) {
-
-                            }
-                        });
-
+                getRemoteImage(holder.mPostImage, photoId, holder.disposable);
             }
 
         }
