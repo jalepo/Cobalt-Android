@@ -13,10 +13,19 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/photos_button"
+        android:id="@+id/friends_button"
         android:layout_marginTop="50dp"
         android:layout_alignParentEnd="true"
+        android:text="@string/friends"
+        android:onClick="friendsButtonClicked"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/photos_button"
+        android:layout_alignParentEnd="true"
         android:text="@string/photos"
+        android:layout_below="@id/friends_button"
         android:onClick="photosButtonClicked"/>
 
     <Button

@@ -1,10 +1,8 @@
 package com.jalepo.cobalt;
 
 import android.content.Intent;
-import android.media.Image;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
@@ -18,16 +16,11 @@ import com.jakewharton.rxbinding.support.v7.widget.RxRecyclerView;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import io.reactivex.Observable;
-import io.reactivex.Scheduler;
-import io.reactivex.Single;
 import io.reactivex.SingleObserver;
-import io.reactivex.android.plugins.RxAndroidPlugins;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
@@ -38,11 +31,13 @@ import rx.Observer;
 import rx.Subscription;
 
 public abstract class CobaltActivity extends AppCompatActivity {
+    public static final String FRIENDLIST = "friendlist";
+    public static final String FEEDLIST = "feedlist";
     protected RecyclerView mRecyclerView;
     protected RecyclerView.Adapter mAdapter;
 
     FeedFetchHelper feedFetchHelper = new FeedFetchHelper();
-
+    String mViewType = FEEDLIST;
     CompositeDisposable disposable = new CompositeDisposable();
     ProfileTracker mProfileTracker;
     String accessToken;
@@ -51,6 +46,7 @@ public abstract class CobaltActivity extends AppCompatActivity {
 
     Subscription scrollEventSubscription;
     protected ArrayList<Feed.FeedItem> dataList = new ArrayList<>();
+    protected ArrayList<Users.User> userList = new ArrayList<>();
 
     protected Predicate<Feed.FeedItem> feedFilter = new Predicate<Feed.FeedItem>() {
         @Override
@@ -153,9 +149,14 @@ public abstract class CobaltActivity extends AppCompatActivity {
     public void loadFirstPage() {
         if(Profile.getCurrentProfile() != null) {
             String pageId = Profile.getCurrentProfile().getId();
-            subscribeToFeed(feedFetchHelper.pageFeedService.getPageFeed(pageId,
-                    feedFetchHelper.feedFields, accessToken));
-
+            if(mViewType.equals(FEEDLIST)) {
+                subscribeToFeed(feedFetchHelper.pageFeedService.getPageFeed(pageId,
+                        feedFetchHelper.feedFields, accessToken));
+            }
+            if(mViewType.equals(FRIENDLIST)) {
+                subscribeToFriends(feedFetchHelper.friendsDataService.getFriends(pageId,
+                        feedFetchHelper.userFields, accessToken));
+            }
         }
     }
 
@@ -208,9 +209,53 @@ public abstract class CobaltActivity extends AppCompatActivity {
                 });
     }
 
+    public void subscribeToFriends(Observable<Users> friendsObservable) {
+        friendsObservable.subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .flatMap(new Function<Users, Observable<Users.User>>() {
+                    @Override
+                    public Observable<Users.User> apply(Users users) throws Exception {
+                        nextPageLink = users.paging.next;
+                        loadingNextPage = false;
+                        return Observable.fromIterable(users.data);
+                    }
+                })
+                //.filter(feedFilter)
+                .subscribe(new io.reactivex.Observer<Users.User>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        Log.v("COBALT", "Friends onSubscribe");
+                        disposable.add(d);
+                    }
+
+                    @Override
+                    public void onNext(Users.User value) {
+                        Log.v("COBALT", "Friends onNext");
+                        updateFriendsList(value);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.v("COBALT", "Friends onError: " + e.getLocalizedMessage());
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        Log.v("COBALT", "Friends onComplete");
+
+                    }
+                });
+    }
+
     public void updateDataList(Feed.FeedItem newFeedItem) {
         dataList.add(newFeedItem);
         mAdapter.notifyItemInserted(dataList.size() - 1);
+    }
+
+    public void updateFriendsList(Users.User newUser) {
+        userList.add(newUser);
+        mAdapter.notifyItemInserted(userList.size() - 1);
     }
 
     public void getRemoteImage(final ImageView imageView,
@@ -248,7 +293,8 @@ public abstract class CobaltActivity extends AppCompatActivity {
 
     public void getRemoteVideo(final ImageView imageView,
                                String objectId,
-                               final CompositeDisposable disposable) {
+                               final CompositeDisposable disposable,
+                               final boolean preview) {
         feedFetchHelper.videoDataService.getVideos(objectId,
                 feedFetchHelper.videoFields, accessToken)
                 .subscribeOn(Schedulers.newThread())
@@ -266,7 +312,9 @@ public abstract class CobaltActivity extends AppCompatActivity {
                             Picasso.with(getApplicationContext())
                                     .load(url)
                                     .into(imageView);
-                            cycleThumbnails(imageView, value, disposable);
+                            if(preview) {
+                                cycleThumbnails(imageView, value, disposable);
+                            }
                         }
                     }
 
@@ -317,5 +365,10 @@ public abstract class CobaltActivity extends AppCompatActivity {
 
                     }
                 });
+    }
+
+    public String getCreatedDate(Date date) {
+
+        return date.toString();
     }
 }

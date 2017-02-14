@@ -40,9 +40,10 @@
         <activity android:name=".FeedListActivity" />
         <activity
             android:name=".MenuActivity"
-            android:theme="@style/TransparentMenu"/>
+            android:theme="@style/TransparentMenu" />
         <activity android:name=".PhotoListActivity" />
-        <activity android:name=".VideoListActivity"></activity>
+        <activity android:name=".VideoListActivity" />
+        <activity android:name=".FriendListActivity"></activity>
     </application>
 
 </manifest>

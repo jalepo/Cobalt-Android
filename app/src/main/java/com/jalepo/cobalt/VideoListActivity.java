@@ -87,7 +87,7 @@ public class VideoListActivity extends CobaltActivity {
             Feed.FeedItem item = mDataset.get(position);
             if(item.type.equals("video")) {
                 final String videoId = item.object_id;
-                getRemoteVideo(holder.mPostImage, videoId, holder.disposable);
+                getRemoteVideo(holder.mPostImage, videoId, holder.disposable, false);
             }
         }
 

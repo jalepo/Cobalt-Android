@@ -41,6 +41,8 @@ public class FeedListActivity extends CobaltActivity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_feedlist);
+
+        mViewType = FEEDLIST;
         mRecyclerView = (RecyclerView) findViewById(R.id.feed_list_view);
 
         mRecyclerView.setHasFixedSize(true);
@@ -68,6 +70,7 @@ public class FeedListActivity extends CobaltActivity {
 
          class ViewHolder extends RecyclerView.ViewHolder {
             TextView mPostOwner;
+            TextView mPostDate;
             TextView mPostMessage;
             TextView mPostLink;
             TextView mPostStory;
@@ -76,6 +79,7 @@ public class FeedListActivity extends CobaltActivity {
             ViewHolder(CardView v) {
                 super(v);
                 mPostOwner = (TextView) v.findViewById(R.id.post_owner_text);
+                mPostDate = (TextView) v.findViewById(R.id.post_created_date);
                 mPostMessage = (TextView) v.findViewById(R.id.post_message_text);
                 mPostStory = (TextView) v.findViewById(R.id.post_story_text);
                 mPostLink = (TextView) v.findViewById(R.id.post_link_text);
@@ -107,6 +111,7 @@ public class FeedListActivity extends CobaltActivity {
             Feed.FeedItem item = mDataset.get(position);
 
             holder.mPostOwner.setText(item.from.getName());
+            holder.mPostDate.setText(getCreatedDate(item.created_time));
             holder.mPostMessage.setText(item.message);
             holder.mPostStory.setText(item.story);
 
@@ -116,7 +121,7 @@ public class FeedListActivity extends CobaltActivity {
             }
             if(item.type.equals("video")) {
                 final String videoId = item.object_id;
-                getRemoteVideo(holder.mPostImage, videoId, holder.disposable);
+                getRemoteVideo(holder.mPostImage, videoId, holder.disposable, true);
 
             }
         }

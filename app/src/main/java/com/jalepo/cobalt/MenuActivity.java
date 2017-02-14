@@ -34,6 +34,11 @@ public class MenuActivity extends AppCompatActivity {
         startActivity(videosIntent);
     }
 
+    public void friendsButtonClicked(View view) {
+        Intent friendsIntent = new Intent(getApplicationContext(), FriendListActivity.class);
+        startActivity(friendsIntent);
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         // Any touch that does not get handled by this class will dismiss the menu
@@ -45,4 +50,6 @@ public class MenuActivity extends AppCompatActivity {
         }
         return false;
     }
+
+
 }

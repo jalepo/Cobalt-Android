@@ -1,17 +1,9 @@
 package com.jalepo.cobalt;
 
-import android.util.Log;
-
 import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 
 import io.reactivex.Observable;
-import io.reactivex.Observer;
 import io.reactivex.Single;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Function;
-import io.reactivex.functions.Predicate;
-import io.reactivex.schedulers.Schedulers;
 import retrofit2.Retrofit;
 
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -28,8 +20,7 @@ public class FeedFetchHelper {
     String feedFields = "id,from,link,object_id,message,type,name,story,created_time,updated_time";
     String photoFields = "id,from,images,link,name,created_time,updated_time";
     String videoFields = "id,from,thumbnails,permalink_url,title,description,created_time,updated_time";
-
-
+    String userFields = "id,name,cover,about,link";
 
     Retrofit retrofit = new Retrofit.Builder()
             .baseUrl(baseUrl)
@@ -40,7 +31,9 @@ public class FeedFetchHelper {
     PageFeedService pageFeedService = retrofit.create(PageFeedService.class);
     PhotoDataService photoDataService = retrofit.create(PhotoDataService.class);
     VideoDataService videoDataService = retrofit.create(VideoDataService.class);
-    PaginationService paginationService = retrofit.create(PaginationService.class);
+    FriendsDataService friendsDataService = retrofit.create(FriendsDataService.class);
+
+    FeedPaginationService paginationService = retrofit.create(FeedPaginationService.class);
 
 
 
@@ -67,7 +60,14 @@ public class FeedFetchHelper {
     }
 
 
-    public interface PaginationService {
+    public interface FriendsDataService {
+        @GET("{user_id}/friends")
+        Observable<Users> getFriends(@Path("user_id") String userId,
+                                     @Query("fields") String fields,
+                                     @Query("access_token") String accessToken);
+    }
+
+    public interface FeedPaginationService {
         @GET
         Observable<Feed> getPage(@Url String url);
     }
