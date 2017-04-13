@@ -46,6 +46,7 @@ public class FBLoginActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(LoginResult loginResult) {
                     launchListActivity();
+                    finish();
                 }
 
                 @Override
@@ -63,6 +64,7 @@ public class FBLoginActivity extends AppCompatActivity {
             // If the user is already logged in, hide the login button and launch the FeedListActivity
             loginButton.setVisibility(View.GONE);
             launchListActivity();
+            finish();
         }
 
     }

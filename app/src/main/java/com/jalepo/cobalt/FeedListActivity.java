@@ -1,6 +1,7 @@
 package com.jalepo.cobalt;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.CardView;
@@ -59,7 +60,6 @@ public class FeedListActivity extends CobaltActivity {
             }
         };
 
-
     }
 
 
@@ -68,7 +68,7 @@ public class FeedListActivity extends CobaltActivity {
     public class FeedListAdapter extends RecyclerView.Adapter<FeedListAdapter.ViewHolder> {
         private ArrayList<Feed.FeedItem> mDataset;
 
-         class ViewHolder extends RecyclerView.ViewHolder {
+         class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
             TextView mPostOwner;
             TextView mPostDate;
             TextView mPostMessage;
@@ -76,6 +76,8 @@ public class FeedListActivity extends CobaltActivity {
             TextView mPostStory;
             ImageView mPostImage;
             CompositeDisposable disposable = new CompositeDisposable();
+            String mExternalLink;
+
             ViewHolder(CardView v) {
                 super(v);
                 mPostOwner = (TextView) v.findViewById(R.id.post_owner_text);
@@ -84,8 +86,16 @@ public class FeedListActivity extends CobaltActivity {
                 mPostStory = (TextView) v.findViewById(R.id.post_story_text);
                 mPostLink = (TextView) v.findViewById(R.id.post_link_text);
                 mPostImage = (ImageView) v.findViewById(R.id.post_imageview);
+                v.setOnClickListener(this);
             }
-        }
+
+
+             @Override
+             public void onClick(View view) {
+                 Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(mExternalLink));
+                 startActivity(browserIntent);
+             }
+         }
 
         public FeedListAdapter(ArrayList<Feed.FeedItem> myDataset) {
             mDataset = myDataset;
@@ -114,6 +124,7 @@ public class FeedListActivity extends CobaltActivity {
             holder.mPostDate.setText(getCreatedDate(item.created_time));
             holder.mPostMessage.setText(item.message);
             holder.mPostStory.setText(item.story);
+            holder.mExternalLink = item.link;
 
             if(item.type.equals("photo")) {
                 final String photoId = item.object_id;

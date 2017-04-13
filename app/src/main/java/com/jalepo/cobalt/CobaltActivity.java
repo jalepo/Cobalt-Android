@@ -147,6 +147,10 @@ public abstract class CobaltActivity extends AppCompatActivity {
     }
 
     public void loadFirstPage() {
+        dataList.clear();
+        userList.clear();
+        mAdapter.notifyDataSetChanged();
+
         if(Profile.getCurrentProfile() != null) {
             String pageId = Profile.getCurrentProfile().getId();
             if(mViewType.equals(FEEDLIST)) {

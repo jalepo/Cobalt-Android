@@ -39,6 +39,12 @@ public class MenuActivity extends AppCompatActivity {
         startActivity(friendsIntent);
     }
 
+    public void feedButtonClicked(View view) {
+        Intent feedIntent = new Intent(getApplicationContext(), FeedListActivity.class);
+        feedIntent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        startActivity(feedIntent);
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         // Any touch that does not get handled by this class will dismiss the menu
@@ -50,6 +56,7 @@ public class MenuActivity extends AppCompatActivity {
         }
         return false;
     }
+
 
 
 }
